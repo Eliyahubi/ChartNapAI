@@ -1,81 +1,220 @@
-# 📊 ChartNap AI
+# ChartNap AI
 
-**Text in — infographic out.** An open-source, fully client-side infographic generator with first-class Hebrew/RTL support, inspired by Napkin AI.
+מחולל אינפוגרפיקה מקומי מבוסס React, עם תמיכה מלאה בעברית, RTL, עריכה ידנית וייצוא למגוון פורמטים.
 
-טקסט נכנס — אינפוגרפיקה יוצאת. מחולל אינפוגרפיקה בקוד פתוח, רץ כולו בדפדפן, עם תמיכת עברית/RTL מלאה.
+Client-side infographic generator built with React, with full Hebrew/RTL support, manual editing, structured JSON input, and multi-format export.
 
-## Features | יכולות
+## סקירה | Overview
 
-- **12 templates**: list, process, cycle, pyramid, comparison, timeline, funnel, matrix (SWOT), mind map, target, steps, fishbone — all RTL-first with live variant gallery.
-- **AI analysis with YOUR key**: Google Gemini, Anthropic Claude, OpenAI, or local Ollama — your API key stays in your browser (localStorage), no server involved. A keyword-based demo mode works with no key at all.
-- **Live content editing**: titles, items, ordering, and a searchable library of ~170 icons in 8 categories.
-- **3 paint styles**: clean, hand-drawn (RoughJS), watercolor.
-- **10 color themes** + fully custom palette.
-- **Translation**: input in any language, output in the same language or translated (Hebrew, English, Arabic, Russian, French, Spanish).
-- **UI in 6 languages** with automatic RTL/LTR flipping.
-- **Exports**: outlined SVG (pastes correctly anywhere, no font needed), PNG, and **editable PowerPoint** — real text boxes and shapes, not a picture.
-- **Word import**: upload a .docx and the text is extracted in-browser.
+ChartNap AI מאפשר להפוך טקסט, מסמך או JSON מובנה לאינפוגרפיקה מוכנה לשימוש. המערכת רצה בדפדפן, ללא שרת חובה, ומאפשרת לעבוד עם מפתח API אישי או במצב דמו מבוסס כללים.
 
-## Installation | התקנה
+ChartNap AI turns text, documents, or structured JSON into ready-to-use infographics. It runs in the browser, does not require a backend, and supports either a personal API key or a rule-based demo mode.
 
-The only requirement is **Node.js 18+** — a one-time install from <https://nodejs.org> (download the LTS installer and keep all defaults).
+## יתרונות מרכזיים | Key Benefits
 
-### The easy way (no terminal) | הדרך הקלה
+- תמיכה מלאה בעברית ובכיווניות RTL, כולל ייצוא תקין לתמונה, SVG ו-PowerPoint.
+- Full Hebrew and RTL support, including reliable export to image, SVG, and PowerPoint.
+- עריכה ידנית של כותרת, פריטים, סדר, טקסטים, אייקונים, ערכות צבע וסגנון ציור.
+- Manual editing for titles, items, order, text, icons, color themes, and drawing style.
+- עבודה עם טקסט חופשי, קבצים או JSON מובנה.
+- Supports free text, uploaded files, or structured JSON.
+- אפשר להעתיק פרומפט למודל שפה חיצוני, לקבל ממנו JSON תקין, ולהדביק אותו באפליקציה ליצירת אינפוגרפיקה מדויקת יותר.
+- You can copy a prompt to an external language model, receive valid JSON, and paste it back into the app to generate a more controlled infographic.
+- ייצוא תמונה בשלושה גדלים קבועים: אנכי 9:16, אופקי 16:9 וריבוע 1:1, בנוסף לגודל אוטומטי.
+- PNG export in three fixed formats: vertical 9:16, horizontal 16:9, and square 1:1, plus automatic size.
+- ייצוא PowerPoint עריך עם תיבות טקסט וצורות, לא רק תמונה שטוחה.
+- Editable PowerPoint export with native text boxes and shapes, not only a flat image.
+- ייצוא SVG בקווי מתאר לשמירה על מראה זהה, ו-SVG עם טקסט חי לעריכה בכלים וקטוריים.
+- SVG export as outlined text for consistent rendering, and live-text SVG for vector editing tools.
 
-After installing Node.js, just **double-click the launcher** in this folder:
+## צילומי מסך | Screenshots
 
-- **macOS**: `start-mac.command`
-  (first time only: if macOS blocks it, right-click → Open. If it opens as text, run once in Terminal: `chmod +x start-mac.command`)
-- **Windows**: `start-windows.bat`
+צילומי המסך נמצאים בתיקיית `_screenshot` ומשולבים כאן כגלריה.
 
-The first run installs dependencies (about a minute); after that it starts in seconds and opens the browser automatically. Keep the window open while you use the app; close it to stop.
+The screenshots are stored in `_screenshot` and embedded below as a gallery.
 
-### The terminal way | דרך הטרמינל
+<p>
+  <img src="_screenshot/infographic-9x16%20%281%29.png" width="180" alt="ChartNap AI screenshot 1">
+  <img src="_screenshot/infographic-9x16%20%282%29.png" width="180" alt="ChartNap AI screenshot 2">
+  <img src="_screenshot/infographic-9x16%20%283%29.png" width="180" alt="ChartNap AI screenshot 3">
+  <img src="_screenshot/infographic-9x16%20%284%29.png" width="180" alt="ChartNap AI screenshot 4">
+  <img src="_screenshot/infographic-9x16%20%285%29.png" width="180" alt="ChartNap AI screenshot 5">
+  <img src="_screenshot/infographic-9x16%20%286%29.png" width="180" alt="ChartNap AI screenshot 6">
+  <img src="_screenshot/infographic-9x16%20%287%29.png" width="180" alt="ChartNap AI screenshot 7">
+  <img src="_screenshot/infographic-9x16%20%288%29.png" width="180" alt="ChartNap AI screenshot 8">
+  <img src="_screenshot/infographic-9x16%20%289%29.png" width="180" alt="ChartNap AI screenshot 9">
+  <img src="_screenshot/infographic-9x16%20%2810%29.png" width="180" alt="ChartNap AI screenshot 10">
+  <img src="_screenshot/infographic-9x16%20%2811%29.png" width="180" alt="ChartNap AI screenshot 11">
+  <img src="_screenshot/infographic-9x16%20%2812%29.png" width="180" alt="ChartNap AI screenshot 12">
+  <img src="_screenshot/infographic-9x16%20%2813%29.png" width="180" alt="ChartNap AI screenshot 13">
+  <img src="_screenshot/infographic-9x16%20%2814%29.png" width="180" alt="ChartNap AI screenshot 14">
+  <img src="_screenshot/infographic-9x16%20%2815%29.png" width="180" alt="ChartNap AI screenshot 15">
+  <img src="_screenshot/infographic-9x16%20%2816%29.png" width="180" alt="ChartNap AI screenshot 16">
+  <img src="_screenshot/infographic-9x16%20%2817%29.png" width="180" alt="ChartNap AI screenshot 17">
+  <img src="_screenshot/infographic-9x16%20%2818%29.png" width="180" alt="ChartNap AI screenshot 18">
+  <img src="_screenshot/infographic-9x16%20%2819%29.png" width="180" alt="ChartNap AI screenshot 19">
+  <img src="_screenshot/infographic-9x16%20%2820%29.png" width="180" alt="ChartNap AI screenshot 20">
+  <img src="_screenshot/infographic-9x16%20%2821%29.png" width="180" alt="ChartNap AI screenshot 21">
+</p>
+
+## יכולות | Features
+
+- 21 תבניות אינפוגרפיקה: רשימה, תהליך, מחזור, פירמידה, השוואה, ציר זמן, משפך, מטריצה, מפת חשיבה, מטרה, מדרגות, הרים, נחש, סקטורים, מדרגות 3D, טבעת, מפת דרכים, עץ, כרטיסים, שברון וציר זמן אנכי.
+- 21 infographic templates: list, flow, cycle, pyramid, comparison, timeline, funnel, matrix, mind map, target, steps, mountain, snake, sector, 3D stairs, ring, roadmap, tree, cards, chevron, and vertical timeline.
+- מנועי AI נתמכים: Google Gemini, Anthropic Claude, OpenAI ו-Ollama מקומי. מפתחות נשמרים בדפדפן בלבד.
+- Supported AI engines: Google Gemini, Anthropic Claude, OpenAI, and local Ollama. Keys are stored only in the browser.
+- מצב דמו ללא מפתח API, המבוסס על זיהוי מילות מפתח.
+- Demo mode without an API key, based on keyword detection.
+- העלאת קבצים: Word, PDF, Excel, TXT, Markdown, JSON, CSV ועוד.
+- File upload: Word, PDF, Excel, TXT, Markdown, JSON, CSV, and more.
+- ממשק בכמה שפות, עם התאמה אוטומטית לכיווניות RTL/LTR.
+- Multi-language UI with automatic RTL/LTR direction handling.
+- ספריית אייקונים מבוססת lucide עם חיפוש לפי שמות ותוויות.
+- Searchable lucide-based icon library.
+- סגנונות ציור: נקי, ידני ו-watercolor.
+- Drawing styles: clean, hand-drawn, and watercolor.
+- ערכות צבע מוכנות ופלטה מותאמת אישית.
+- Built-in color themes and custom palette support.
+
+## עבודה עם JSON ומודל שפה | JSON and LLM Workflow
+
+אפשר לעבוד בשתי דרכים:
+
+There are two main workflows:
+
+1. כתיבה או העלאה ישירה: מדביקים טקסט, מעלים קובץ, בוחרים מנוע AI ומייצרים אינפוגרפיקה.
+2. עבודה עם JSON: מעתיקים מהאפליקציה פרומפט ייעודי, שולחים אותו למודל שפה חיצוני יחד עם התוכן, מקבלים JSON תקין, ומדביקים אותו בתיבת הטקסט באפליקציה.
+
+1. Direct input or upload: paste text, upload a file, choose an AI engine, and generate an infographic.
+2. JSON workflow: copy the app's dedicated prompt, send it to an external language model with your content, receive valid JSON, and paste it into the app.
+
+מבנה ה-JSON מבוסס על סכמה סמנטית פשוטה:
+
+The JSON structure is based on a simple semantic schema:
+
+```json
+{
+  "type": "flow",
+  "title": "כותרת האינפוגרפיקה",
+  "items": [
+    {
+      "title": "שלב ראשון",
+      "body": "הסבר קצר",
+      "icon": "sparkles"
+    },
+    {
+      "title": "שלב שני",
+      "body": "הסבר קצר נוסף",
+      "icon": "settings"
+    }
+  ]
+}
+```
+
+השיטה הזו מתאימה כאשר רוצים שליטה גבוהה יותר במבנה, בשמות השלבים, בכמות הפריטים ובאייקונים.
+
+This workflow is useful when you need more control over the structure, item names, number of items, and icons.
+
+## ייצוא | Export
+
+| פורמט | שימוש עיקרי |
+|---|---|
+| PNG אוטומטי | שמירה מהירה לפי גודל האינפוגרפיקה בפועל |
+| PNG 9:16 | סטורי, מובייל, מסך אנכי |
+| PNG 16:9 | מצגות, מסכים רחבים, שקפים |
+| PNG 1:1 | פוסטים מרובעים ורשתות חברתיות |
+| SVG בקווי מתאר | תוצאה יציבה להדבקה או פתיחה בכלים שונים, ללא תלות בפונט |
+| SVG עם טקסט חי | עריכה בכלים וקטוריים כגון Illustrator או Inkscape |
+| PPTX | שקף PowerPoint עריך עם טקסט וצורות |
+
+| Format | Main Use |
+|---|---|
+| Auto PNG | Quick export using the actual infographic size |
+| PNG 9:16 | Stories, mobile, vertical screens |
+| PNG 16:9 | Presentations, widescreen displays, slides |
+| PNG 1:1 | Square posts and social platforms |
+| Outlined SVG | Stable rendering across tools without font dependency |
+| Live-text SVG | Editing in vector tools such as Illustrator or Inkscape |
+| PPTX | Editable PowerPoint slide with native text and shapes |
+
+## התקנה | Installation
+
+נדרש Node.js 18 ומעלה.
+
+Requires Node.js 18 or later.
+
+### הפעלה ללא טרמינל | No Terminal
+
+לאחר התקנת Node.js, הפעילו את אחד הקבצים:
+
+After installing Node.js, run one of these launchers:
+
+- macOS: `start-mac.command`
+- Windows: `start-windows.bat`
+
+בהפעלה ראשונה יותקנו התלויות. לאחר מכן הדפדפן ייפתח אוטומטית.
+
+On the first run, dependencies are installed. After that, the browser opens automatically.
+
+### הפעלה בטרמינל | Terminal
 
 ```bash
-cd chartnap-ai
 npm install
 npm run dev
 ```
 
-Then open <http://localhost:5173>.
+Open:
 
-### Production build (optional)
-
-```bash
-npm run build      # creates dist/
-npm run preview    # serves the build locally
+```text
+http://localhost:5173
 ```
 
-The `dist/` folder is fully static — host it on any static server (GitHub Pages, Netlify, an office NAS...).
+### בניית גרסת הפצה | Production Build
 
-## API keys | מפתחות API
+```bash
+npm run build
+npm run preview
+```
 
-Pick an engine in the app and paste your own key. Keys are stored **only in your browser's localStorage** and sent **only to the provider you chose**.
+תיקיית `dist` היא סטטית וניתנת לפרסום בכל שירות אחסון סטטי.
+
+The `dist` folder is static and can be deployed to any static hosting service.
+
+## מפתחות API | API Keys
+
+אפשר לבחור מנוע AI ולהדביק מפתח אישי. המפתח נשמר ב-localStorage בדפדפן ונשלח רק לספק שנבחר.
+
+You can choose an AI engine and paste your own key. The key is stored in browser localStorage and sent only to the selected provider.
 
 | Engine | Get a key | Notes |
 |---|---|---|
-| Google Gemini | <https://aistudio.google.com/apikey> | Free tier available. Default model: `gemini-2.5-flash` |
+| Google Gemini | <https://aistudio.google.com/apikey> | Default model: `gemini-2.5-flash` |
 | Anthropic Claude | <https://console.anthropic.com/settings/keys> | Default model: `claude-sonnet-4-6` |
 | OpenAI | <https://platform.openai.com/api-keys> | Default model: `gpt-4o-mini` |
-| Ollama (local, free) | <https://ollama.com> → `ollama pull gemma3` | No key needed; runs on your machine |
-| Demo | — | No AI: keyword heuristics only |
+| Ollama | <https://ollama.com> | Local model, no API key required |
+| Demo | - | Rule-based mode without external AI |
 
-You can override the model name per engine in the UI.
+אפשר לגבות ולהעביר הגדרות באמצעות `Save settings to file` ו-`Load settings from file`.
 
-**Backup / move to another computer:** use the "Save settings to file" / "Load settings from file" buttons in the app — they export and import your API keys and preferences as a small `chartnap-settings.json` file, so you never have to find and paste keys again.
+Settings can be backed up or moved using `Save settings to file` and `Load settings from file`.
 
-## Notes & limitations | הערות
+## טכנולוגיה | Tech
 
-- Direct-from-browser API calls are convenient for personal/local use. If you publish a public instance, proxy the calls server-side so users' traffic doesn't expose keys in shared environments.
-- Hand-drawn / watercolor styles use SVG filters; when pasting SVG into Microsoft Office the filter is dropped — use PNG or the editable PPTX export for those styles.
-- Icon tooltips in the picker are currently in Hebrew; search matches both Hebrew labels and English icon names.
-- Infographic layouts are RTL-oriented by design; LTR-language output renders correctly but flows right-to-left.
+React, Vite, TypeScript, Zod, RoughJS, lucide, opentype.js, pptxgenjs, mammoth, pdfjs-dist ו-xlsx.
 
-## Tech | טכנולוגיה
+React, Vite, TypeScript, Zod, RoughJS, lucide, opentype.js, pptxgenjs, mammoth, pdfjs-dist, and xlsx.
 
-React + Vite + TypeScript. Rendering: deterministic SVG layout engine (the AI only fills a semantic JSON — `src/core/schema.ts`). RoughJS for sketch style, lucide for icons, opentype.js for outlined-text export, pptxgenjs for PowerPoint, mammoth for .docx import. Hebrew text: canvas-measured explicit positioning + bidi isolates + `textLength` for engine-independent rendering.
+מנוע הרינדור מייצר SVG דטרמיניסטי מתוך JSON סמנטי. הטיפול בעברית כולל מדידת טקסט, מיקום מפורש, bidi isolates וייצוא קווי מתאר.
 
-## License
+The rendering engine creates deterministic SVG from semantic JSON. Hebrew handling includes text measurement, explicit positioning, bidi isolates, and outlined export.
+
+## הערות | Notes
+
+- קריאות API ישירות מהדפדפן מתאימות לשימוש מקומי או אישי. לפרסום ציבורי מומלץ להשתמש בפרוקסי שרת.
+- Direct browser API calls are suitable for local or personal use. For public deployment, use a server-side proxy.
+- בסגנונות ידני ו-watercolor ייתכנו הבדלים כאשר SVG נפתח בכלי Office. במקרים כאלה מומלץ להשתמש ב-PNG או PPTX.
+- Hand-drawn and watercolor styles may render differently when SVG is opened in Office tools. Use PNG or PPTX when exact rendering is required.
+
+## רישיון | License
 
 MIT. Icons: [lucide](https://lucide.dev) (ISC). Font: [Heebo](https://fonts.google.com/specimen/Heebo) (OFL).
