@@ -328,6 +328,76 @@ export function Polygon({
   return content;
 }
 
+/* ---------- נתיב SVG כללי (קשתות, סקטורים, דרכים) עם תמיכת סגנונות ---------- */
+export function PaintPath({
+  d,
+  fill = 'none',
+  stroke = 'none',
+  isRough,
+  fillStyle = 'solid',
+  seed = 1,
+  strokeWidth = 1.5,
+  fillOpacity,
+  strokeLinecap,
+  dash,
+}: {
+  d: string;
+  fill?: string;
+  stroke?: string;
+  isRough: boolean;
+  fillStyle?: string;
+  seed?: number;
+  strokeWidth?: number;
+  fillOpacity?: number;
+  strokeLinecap?: 'round' | 'butt' | 'square';
+  dash?: string;
+}) {
+  const paint = useContext(PaintContext);
+  const content = useMemo(() => {
+    if (!isRough && paint === 'wash' && fill !== 'none') {
+      const op = fillOpacity ?? (fillStyle === 'solid' ? 0.78 : 0.5);
+      return (
+        <g>
+          <WashDefs />
+          <path d={d} fill={fill} fillOpacity={op} stroke={stroke} strokeOpacity={0.85} strokeWidth={Math.max(strokeWidth, 2.2)} filter="url(#hnWashF)" strokeLinecap={strokeLinecap} strokeDasharray={dash} />
+        </g>
+      );
+    }
+    if (!isRough) {
+      return <path d={d} fill={fill} fillOpacity={fillOpacity} stroke={stroke} strokeWidth={strokeWidth} strokeLinecap={strokeLinecap} strokeDasharray={dash} />;
+    }
+    try {
+      const drawable = generator.path(d, {
+        fill: fill === 'none' ? undefined : fill,
+        stroke: stroke === 'none' ? fill : stroke,
+        fillStyle,
+        roughness: 1.3,
+        fillWeight: 1.2,
+        hachureGap: 7,
+        strokeWidth: Math.min(strokeWidth, 3),
+        seed,
+      });
+      return <g>{roughDrawableToPaths(drawable, fill === 'none' ? stroke : fill, stroke === 'none' ? fill : stroke)}</g>;
+    } catch {
+      return <path d={d} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeLinecap={strokeLinecap} strokeDasharray={dash} />;
+    }
+  }, [d, fill, stroke, isRough, fillStyle, seed, strokeWidth, fillOpacity, strokeLinecap, dash, paint]);
+  return content;
+}
+
+/* ---------- ערבוב צבעי hex (תחליף קל ל-tinycolor) ---------- */
+export function mixHex(c1: string, c2: string, w: number): string {
+  const p = (c: string) => {
+    const h = c.replace('#', '');
+    const f = h.length === 3 ? h.split('').map((x) => x + x).join('') : h;
+    return [parseInt(f.slice(0, 2), 16), parseInt(f.slice(2, 4), 16), parseInt(f.slice(4, 6), 16)];
+  };
+  const a = p(c1);
+  const b = p(c2);
+  const m = a.map((v, i) => Math.round(v + (b[i] - v) * w));
+  return '#' + m.map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0')).join('');
+}
+
 /* ---------- חץ RTL (מצביע שמאלה כברירת מחדל) ---------- */
 export function Arrow({
   x1,

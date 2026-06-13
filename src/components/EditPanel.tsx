@@ -93,7 +93,7 @@ export default function EditPanel({
 }) {
   const { t } = useI18n();
   const isComparison = doc.type === 'comparison';
-  const isTimeline = doc.type === 'timeline';
+  const isTimeline = doc.type === 'timeline' || doc.type === 'chevron' || doc.type === 'vtimeline';
 
   function setItem(i: number, patch: Partial<VisualItem>) {
     const items = doc.items.map((it, j) => (j === i ? { ...it, ...patch } : it));

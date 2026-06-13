@@ -1,21 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
 import type { VisualDoc, VisualType } from './core/schema';
+import { VisualDocSchema, VISUAL_TYPES } from './core/schema';
 import { classifyHeuristic } from './core/classify';
 import { classifyWithClaude, classifyWithGemini, classifyWithOpenAI, classifyWithOllama } from './core/llm';
 import { THEMES, themeByName, makeCustomTheme } from './core/themes';
 import { Infographic } from './templates';
 import { PaintContext, type PaintMode } from './templates/common';
-import { downloadPng, downloadSvg, downloadPptx } from './core/export';
+import { downloadSvg, downloadSvgLiveText, downloadPptx, downloadPngRatio, type PngRatio } from './core/export';
 import EditPanel from './components/EditPanel';
 import VariantGallery from './components/VariantGallery';
 import { I18nContext, makeI18n, UI_LANGS, type UiLang } from './core/i18n';
 
-type Engine = 'demo' | 'gemini' | 'claude' | 'openai' | 'ollama';
+type Engine = 'demo' | 'manual' | 'gemini' | 'claude' | 'openai' | 'ollama';
 
 const DEFAULT_CUSTOM = ['#0d7377', '#f29f05', '#7b2d8b', '#2d6a8b'];
 
+/** מסמך ריק לבנייה ידנית — כותרת ושני פריטים למילוי */
+const BLANK_DOC: VisualDoc = {
+  type: 'list',
+  title: '',
+  items: [
+    { title: '', body: '' },
+    { title: '', body: '' },
+  ],
+};
+
 const ENGINES: { id: Engine; label: string; needsKey: boolean; defaultModel: string; keyUrl?: string }[] = [
   { id: 'demo', label: '', needsKey: false, defaultModel: '' },
+  { id: 'manual', label: '', needsKey: false, defaultModel: '' },
   { id: 'gemini', label: 'Google Gemini', needsKey: true, defaultModel: 'gemini-2.5-flash', keyUrl: 'https://aistudio.google.com/apikey' },
   { id: 'claude', label: 'Anthropic Claude', needsKey: true, defaultModel: 'claude-sonnet-4-6', keyUrl: 'https://console.anthropic.com/settings/keys' },
   { id: 'openai', label: 'OpenAI', needsKey: true, defaultModel: 'gpt-4o-mini', keyUrl: 'https://platform.openai.com/api-keys' },
@@ -52,6 +64,7 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [pngRatio, setPngRatio] = useState<PngRatio>('auto');
   const svgWrapRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const settingsInputRef = useRef<HTMLInputElement>(null);
@@ -94,8 +107,23 @@ export default function App() {
 
   async function generate() {
     setError('');
-    setBusy(true);
     localStorage.setItem('engine', engine);
+    // הדבקת JSON מובנה (מ-LLM חיצוני) — שימוש ישיר במבנה המדויק, בלי ניתוח
+    const pasted = tryParseDoc(text);
+    if (pasted) {
+      setDoc(pasted);
+      setTypeOverride('auto');
+      setNotice(t('jsonLoaded'));
+      setTimeout(() => setNotice(''), 4000);
+      return;
+    }
+    // בנייה ידנית: פותחים מסמך ריק ישר לעריכה — בלי טקסט ובלי מודל
+    if (engine === 'manual') {
+      setDoc(JSON.parse(JSON.stringify(BLANK_DOC)) as VisualDoc);
+      setTypeOverride('auto');
+      return;
+    }
+    setBusy(true);
     try {
       if (engineDef.needsKey && !curKey.trim()) throw new Error(t('keyMissing'));
       if (engine === 'gemini') {
@@ -118,26 +146,118 @@ export default function App() {
     }
   }
 
-  /** docx — חילוץ טקסט בדפדפן עם mammoth */
+  /** חילוץ טקסט מקובץ — docx, pdf, xlsx, וכל קובץ טקסט (txt/md/json/csv) */
   async function handleFile(file: File) {
     setError('');
     setBusy(true);
     try {
-      if (!file.name.toLowerCase().endsWith('.docx')) throw new Error(t('unsupported'));
-      const mammoth = await import('mammoth');
-      const buf = await file.arrayBuffer();
-      const result = await mammoth.extractRawText({ arrayBuffer: buf });
-      setText(result.value ?? '');
+      const name = file.name.toLowerCase();
+      const ext = name.slice(name.lastIndexOf('.') + 1);
+
+      if (ext === 'docx') {
+        const mammoth = await import('mammoth');
+        const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+        setText(result.value ?? '');
+      } else if (ext === 'pdf') {
+        const pdfjs = await import('pdfjs-dist');
+        const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
+        pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+        const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+        let out = '';
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page = await pdf.getPage(p);
+          const tc = await page.getTextContent();
+          out += tc.items.map((it) => ('str' in it ? (it as { str: string }).str : '')).join(' ') + '\n';
+        }
+        setText(out.trim());
+      } else if (ext === 'xlsx' || ext === 'xls' || ext === 'xlsm') {
+        const XLSX = await import('xlsx');
+        const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+        const parts = wb.SheetNames.map((sn) => XLSX.utils.sheet_to_csv(wb.Sheets[sn]));
+        setText(parts.join('\n').trim());
+      } else if (['txt', 'md', 'markdown', 'json', 'csv', 'tsv', 'log', 'rtf', 'html', 'htm'].includes(ext)) {
+        setText((await file.text()).trim());
+      } else {
+        // ניסיון אחרון: לקרוא כטקסט גולמי
+        const raw = (await file.text()).trim();
+        if (!raw) throw new Error(t('unsupported'));
+        setText(raw);
+      }
     } catch (e) {
-      setError(`${t('docxFail')}: ${(e as Error).message}`);
+      setError(`${t('fileFail')}: ${(e as Error).message}`);
     } finally {
       setBusy(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }
 
+  /** אם המשתמש הדביק JSON תקין של מבנה אינפוגרפיקה — מחזיר אותו ישירות */
+  function tryParseDoc(raw: string): VisualDoc | null {
+    let s = raw.trim();
+    if (!s) return null;
+    s = s.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+    if (!s.startsWith('{')) return null;
+    try {
+      const parsed = VisualDocSchema.safeParse(JSON.parse(s));
+      return parsed.success ? parsed.data : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** פרומפט מובנה ל-LLM חיצוני — מחזיר JSON שהדבקתו בתיבה תיתן את המבנה המדויק */
+  function buildPrompt(): string {
+    const types = VISUAL_TYPES.join(', ');
+    return [
+      'אתה ממיר תוכן לאינפוגרפיקה. נתח את התוכן שאספק בסוף, וֶהחזר אובייקט JSON יחיד בלבד — בלי טקסט נוסף, בלי הסברים, בלי גדרות ‏```‏.',
+      '',
+      'מבנה ה-JSON הנדרש:',
+      '{',
+      `  "type": <אחד מאלה: ${types}>,`,
+      '  "title": "כותרת ראשית קצרה (עד 80 תווים)",',
+      '  "items": [',
+      '    { "title": "כותרת פריט (2-5 מילים)", "body": "משפט הסבר קצר (לא חובה)", "label": "שנה — לציר זמן בלבד", "side": "a או b — להשוואה בלבד" }',
+      '  ],',
+      '  "sideLabels": ["כותרת צד ימין", "כותרת צד שמאל"]   // רק עבור type=comparison',
+      '}',
+      '',
+      'כללים:',
+      '- בחר את ה-type המתאים ביותר לתוכן (תהליך=flow, השוואה=comparison, מחזור=cycle, פירמידה=pyramid, ציר זמן=timeline, ציר זמן אנכי=vtimeline, משפך=funnel, מטריצת SWOT=matrix, מפת חשיבה=mindmap, היררכיה/ארגוני=tree, מטרה=target, מדרגות=steps/stairs3d, צמיחה=mountain, רצף מתפתל=snake, חלוקה לחלקים=sector, מעגל=ring, מפת דרכים=roadmap, חיצי שברון=chevron, כרטיסים=cards, רשימה=list).',
+      '- בין 2 ל-8 פריטים.',
+      '- "body" תמציתי (עד ~160 תווים). השמט "label"/"side"/"sideLabels" אם לא רלוונטיים.',
+      '- כתוב באותה שפה של התוכן.',
+      '- החזר JSON תקין בלבד.',
+      '',
+      'התוכן לניתוח:',
+      '"""',
+      '<<< הדבק כאן את הטקסט/התוכן שלך >>>',
+      '"""',
+    ].join('\n');
+  }
+
+  async function copyPrompt() {
+    setError('');
+    setNotice('');
+    try {
+      await navigator.clipboard.writeText(buildPrompt());
+      setNotice(t('promptCopied'));
+      setTimeout(() => setNotice(''), 5000);
+    } catch {
+      setError(t('promptCopyFail'));
+    }
+  }
+
   function getSvg(): SVGSVGElement | null {
     return svgWrapRef.current?.querySelector('svg') ?? null;
+  }
+
+  /** איפוס מלא של התוכן — בלי לגעת במפתחות ובהעדפות */
+  function resetAll() {
+    setDoc(null);
+    setText('');
+    setTypeOverride('auto');
+    setError('');
+    setNotice('');
   }
 
   /* ---------- ייצוא/ייבוא הגדרות (מפתחות והעדפות) לקובץ ---------- */
@@ -208,14 +328,18 @@ export default function App() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".docx"
+                accept=".docx,.pdf,.xlsx,.xls,.xlsm,.txt,.md,.markdown,.json,.csv,.tsv,.log,.rtf,.html,.htm"
                 style={{ display: 'none' }}
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
               />
               <button onClick={() => fileInputRef.current?.click()} disabled={busy}>
                 {t('upload')}
               </button>
+              <button className="mini" onClick={copyPrompt} title={t('copyPromptHint')}>
+                {t('copyPrompt')}
+              </button>
             </div>
+            <p className="hint">{t('copyPromptHint')}</p>
 
             <div className="row">
               <label className="lbl">{t('outLang')}</label>
@@ -239,7 +363,9 @@ export default function App() {
                 onChange={(e) => setEngine(e.target.value as Engine)}
               >
                 {ENGINES.map((e) => (
-                  <option key={e.id} value={e.id}>{e.id === 'demo' ? t('demo') : e.label}</option>
+                  <option key={e.id} value={e.id}>
+                    {e.id === 'demo' ? t('demo') : e.id === 'manual' ? t('manual') : e.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -254,7 +380,7 @@ export default function App() {
                 onChange={(e) => setKey(e.target.value)}
               />
             )}
-            {engine !== 'demo' && (
+            {engine !== 'demo' && engine !== 'manual' && (
               <input
                 className="key-input"
                 dir="ltr"
@@ -269,9 +395,14 @@ export default function App() {
               </p>
             )}
             {engine === 'demo' && <p className="hint">{t('demoHint')}</p>}
+            {engine === 'manual' && <p className="hint">{t('manualHint')}</p>}
 
-            <button className="primary" onClick={generate} disabled={busy || text.trim().length < 20}>
-              {busy ? t('analyzing') : t('generate')}
+            <button
+              className="primary"
+              onClick={generate}
+              disabled={busy || (engine !== 'manual' && text.trim().length < 20)}
+            >
+              {busy ? t('analyzing') : engine === 'manual' ? t('startManual') : t('generate')}
             </button>
             {error && <p className="error">{error}</p>}
             {notice && <p className="hint">{notice}</p>}
@@ -331,9 +462,20 @@ export default function App() {
                       <option value="wash">{t('wash')}</option>
                     </select>
                   </label>
+                  <button className="reset-btn" onClick={resetAll}>{t('reset')}</button>
                   <div className="spacer" />
-                  <button onClick={() => { const s = getSvg(); if (s) downloadSvg(s); }}>⬇ SVG</button>
-                  <button onClick={() => { const s = getSvg(); if (s) downloadPng(s); }}>⬇ PNG</button>
+                  <button onClick={() => { const s = getSvg(); if (s) downloadSvg(s); }} title={t('svgOutlineHint')}>⬇ SVG</button>
+                  <button onClick={() => { const s = getSvg(); if (s) downloadSvgLiveText(s); }} title={t('svgEditableHint')}>{t('svgEditable')}</button>
+                  <label>
+                    {t('imgSize')}
+                    <select value={pngRatio} onChange={(e) => setPngRatio(e.target.value as PngRatio)}>
+                      <option value="auto">{t('sizeAuto')}</option>
+                      <option value="1:1">1:1</option>
+                      <option value="9:16">9:16</option>
+                      <option value="16:9">16:9</option>
+                    </select>
+                  </label>
+                  <button onClick={() => { const s = getSvg(); if (s) downloadPngRatio(s, pngRatio); }}>⬇ PNG</button>
                   <button onClick={() => { const s = getSvg(); if (s) downloadPptx(s); }}>⬇ PPTX</button>
                 </div>
                 <div className="canvas" ref={svgWrapRef}>
@@ -348,6 +490,11 @@ export default function App() {
             )}
           </section>
         </main>
+
+        <footer className="site-footer">
+          {t('builtBy')} ·{' '}
+          <a href="https://elbitlaw.com" target="_blank" rel="noreferrer">elbitlaw.com</a>
+        </footer>
       </div>
     </I18nContext.Provider>
   );

@@ -176,6 +176,58 @@ export async function downloadPng(svgEl: SVGSVGElement, filename = 'infographic.
   download(await res.blob(), filename);
 }
 
+/* ---------- PNG ביחסי גובה-רוחב לרשתות חברתיות ---------- */
+
+export type PngRatio = 'auto' | '1:1' | '9:16' | '16:9';
+
+const RATIO_DIMS: Record<Exclude<PngRatio, 'auto'>, [number, number]> = {
+  '1:1': [1080, 1080],
+  '9:16': [1080, 1920],
+  '16:9': [1920, 1080],
+};
+
+/**
+ * ייצוא PNG בקנבס ביחס נתון: רקע בצבע ערכת הצבע,
+ * האינפוגרפיקה ממורכזת ומוקטנת/מוגדלת להתאמה עם שוליים.
+ */
+export async function downloadPngRatio(svgEl: SVGSVGElement, ratio: PngRatio, filename?: string) {
+  if (ratio === 'auto') {
+    return downloadPng(svgEl, filename ?? 'infographic.png', 2);
+  }
+  const [W, H] = RATIO_DIMS[ratio];
+  const str = await svgToString(svgEl);
+  const svgBlob = new Blob([str], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error('SVG load failed'));
+    img.src = url;
+  });
+  const w = svgEl.viewBox.baseVal.width || svgEl.clientWidth;
+  const h = svgEl.viewBox.baseVal.height || svgEl.clientHeight;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  // רקע תואם לערכת הצבע (templates מציבים style.background על ה-svg)
+  ctx.fillStyle = svgEl.style.background || '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  const pad = 0.94; // שוליים של 6%
+  const scale = Math.min((W * pad) / w, (H * pad) / h);
+  const dw = w * scale;
+  const dh = h * scale;
+  ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  URL.revokeObjectURL(url);
+
+  const name = filename ?? `infographic-${ratio.replace(':', 'x')}.png`;
+  canvas.toBlob((blob) => {
+    if (blob) download(blob, name);
+  }, 'image/png');
+}
+
 /* ---------- PPTX עריך: SVG ← צורות וטקסט נטיביים ---------- */
 
 interface PptxCtx {

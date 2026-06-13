@@ -18,7 +18,16 @@ export const VISUAL_TYPES = [
   'mindmap', // מפת חשיבה — מרכז + ענפים
   'target', // מטרה — רמות מהליבה החוצה
   'steps', // מדרגות — התקדמות לעבר יעד
-  'fishbone', // עצם דג — גורמים ← תוצאה
+  'mountain', // הרים עולים — סדרת צמיחה
+  'snake', // נחש — סרט מתפתל
+  'sector', // סקטורים — טבעת 360°
+  'stairs3d', // מדרגות תלת-ממד — קוביות איזומטריות
+  'ring', // טבעת חצים — פריטים על מעגל
+  'roadmap', // מפת דרכים — כביש מתפתל
+  'tree', // היררכיית עץ — שורש מתפצל לענפים
+  'cards', // כרטיסי רצף — שורת כרטיסים מאוירים
+  'chevron', // חיצי שברון — רצף אופקי
+  'vtimeline', // ציר זמן אנכי — פס מרכזי עם תחנות
 ] as const;
 
 export type VisualType = (typeof VISUAL_TYPES)[number];
@@ -61,5 +70,14 @@ export const TYPE_LABELS: Record<VisualType, string> = {
   mindmap: 'מפת חשיבה',
   target: 'מטרה',
   steps: 'מדרגות',
-  fishbone: 'סיבה ותוצאה',
+  mountain: 'הרים עולים',
+  snake: 'נחש גריד',
+  sector: 'סקטורים',
+  stairs3d: 'מדרגות 3D',
+  ring: 'טבעת חצים',
+  roadmap: 'מפת דרכים',
+  tree: 'היררכיית עץ',
+  cards: 'כרטיסי רצף',
+  chevron: 'חיצי שברון',
+  vtimeline: 'ציר זמן אנכי',
 };

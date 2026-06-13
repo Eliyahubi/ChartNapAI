@@ -11,7 +11,16 @@ import MatrixTemplate from './MatrixTemplate';
 import MindmapTemplate from './MindmapTemplate';
 import TargetTemplate from './TargetTemplate';
 import StepsTemplate from './StepsTemplate';
-import FishboneTemplate from './FishboneTemplate';
+import MountainTemplate from './MountainTemplate';
+import SnakeTemplate from './SnakeTemplate';
+import SectorTemplate from './SectorTemplate';
+import Stairs3dTemplate from './Stairs3dTemplate';
+import RingTemplate from './RingTemplate';
+import RoadmapTemplate from './RoadmapTemplate';
+import TreeTemplate from './TreeTemplate';
+import CardsTemplate from './CardsTemplate';
+import ChevronTemplate from './ChevronTemplate';
+import VTimelineTemplate from './VTimelineTemplate';
 
 const REGISTRY: Record<VisualType, React.ComponentType<import('./common').TemplateProps>> = {
   list: ListTemplate,
@@ -25,7 +34,16 @@ const REGISTRY: Record<VisualType, React.ComponentType<import('./common').Templa
   mindmap: MindmapTemplate,
   target: TargetTemplate,
   steps: StepsTemplate,
-  fishbone: FishboneTemplate,
+  mountain: MountainTemplate,
+  snake: SnakeTemplate,
+  sector: SectorTemplate,
+  stairs3d: Stairs3dTemplate,
+  ring: RingTemplate,
+  roadmap: RoadmapTemplate,
+  tree: TreeTemplate,
+  cards: CardsTemplate,
+  chevron: ChevronTemplate,
+  vtimeline: VTimelineTemplate,
 };
 
 export function Infographic({

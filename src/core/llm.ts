@@ -19,7 +19,16 @@ const SYSTEM_PROMPT = `אתה מנוע סמנטי של מחולל אינפוגר
    - "mindmap": נושא מרכזי אחד עם היבטים בלתי תלויים סביבו (ה-title הוא המרכז)
    - "target": רמות מיקוד או עדיפות מהליבה החוצה (3-4 פריטים, הראשון = הליבה)
    - "steps": התקדמות מדורגת בעלייה לעבר יעד (3-6 פריטים)
-   - "fishbone": גורמים או סיבות שמובילים לתוצאה אחת (ה-title הוא התוצאה)
+   - "mountain": צמיחה ועלייה הדרגתית — כל פריט = שלב גדול יותר מהקודם (3-6 פריטים)
+   - "snake": רצף שלבים שמתפתל כסרט עם תחנות ממוספרות — מסע (4-8 פריטים)
+   - "sector": חלוקה לחלקים משלימים שמרכיבים שלם אחד — כמו עוגה (3-7 פריטים)
+   - "stairs3d": עלייה מדורגת תלת-ממדית — כל שלב גבוה מהקודם ובולט (3-6 פריטים)
+   - "ring": פריטים מחוברים במעגל עם חצים בין שכנים — מחזור חץ (4-8 פריטים)
+   - "roadmap": מפת דרכים עם תחנות לאורך כביש מתפתל — תוכנית לאורך זמן (3-8 פריטים)
+   - "tree": היררכיה/מבנה ארגוני — הפריט הראשון הוא השורש והשאר מסתעפים ממנו (3-7 פריטים)
+   - "cards": שורת כרטיסים מאוירים להצגת מאפיינים/יתרונות במקביל (3-6 פריטים)
+   - "chevron": רצף שלבים אופקי בצורת חיצי שברון — שלבים עוקבים קצרים (3-6 פריטים)
+   - "vtimeline": ציר זמן אנכי עם תחנות ממוספרות — אבני דרך לאורך זמן (3-6 פריטים)
 2. לחלץ 3-6 פריטים. לכל פריט: title (2-5 מילים, קליט) ו-body (משפט אחד, עד 20 מילים).
 3. ב-comparison: לכל פריט הוסף side ("a" או "b") וקבע sideLabels — שמות שני הצדדים.
 4. ב-timeline: לכל פריט הוסף label עם השנה/התאריך.
@@ -115,7 +124,28 @@ export async function classifyWithClaude(
 /** ניקוי code fences ופענוח */
 function parseDoc(raw: string): VisualDoc {
   const jsonText = raw.replace(/```json/g, '').replace(/```/g, '').trim();
-  return VisualDocSchema.parse(JSON.parse(jsonText));
+  try {
+    return VisualDocSchema.parse(JSON.parse(jsonText));
+  } catch (origErr) {
+    // הצלה ל-JSON קטוע: ניסיון לסגור מחרוזת/מערך/אובייקט פתוחים,
+    // וגם חיתוך לפריט השלם האחרון
+    const candidates: string[] = [];
+    for (const suffix of ['"}]}', '"}', '}]}', ']}', '}', '"]}']) {
+      candidates.push(jsonText + suffix);
+    }
+    const lastBrace = jsonText.lastIndexOf('}');
+    if (lastBrace > 0) {
+      const cut = jsonText.slice(0, lastBrace + 1);
+      candidates.push(cut + ']}', cut + '}', cut);
+    }
+    for (const c of candidates) {
+      try {
+        const doc = VisualDocSchema.parse(JSON.parse(c));
+        if (doc.items.length >= 2) return doc;
+      } catch { /* הבא בתור */ }
+    }
+    throw origErr;
+  }
 }
 
 /**
@@ -136,7 +166,13 @@ export async function classifyWithGemini(
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT + langRule(lang) }] },
         contents: [{ role: 'user', parts: [{ text }] }],
-        generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 2048 },
+        generationConfig: {
+          responseMimeType: 'application/json',
+          // מודלי 2.5 מבזבזים "טוקני חשיבה" מתוך תקציב הפלט —
+          // בלי כיבוי + תקציב גדול ה-JSON נקטע באמצע
+          maxOutputTokens: 8192,
+          ...(model.includes('2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+        },
       }),
     }
   );
@@ -145,7 +181,11 @@ export async function classifyWithGemini(
     throw new Error(`Gemini ${res.status}: ${err.slice(0, 200)}`);
   }
   const data = await res.json();
-  const raw: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const cand = data.candidates?.[0];
+  if (cand?.finishReason === 'MAX_TOKENS') {
+    throw new Error('Gemini: התשובה נקטעה (MAX_TOKENS) — נסו טקסט קצר יותר');
+  }
+  const raw: string = cand?.content?.parts?.[0]?.text ?? '';
   return parseDoc(raw);
 }
 
